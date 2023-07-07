@@ -21,7 +21,40 @@ sysctl -w net.ipv4.ip_forward=1
 echo 1 > /proc/sys/net/ipv4/ip_forward
 # restart sysctl
 sysctl -p
+```
 
+### Install the openvpn package
+```bash
+yum install -y epel-release
+yum install -y openvpn
 ```
 
 </details>
+
+
+<details>
+<summary>Step 2: Config OpenVpn </summary> 
+
+### Nagivate to openvpn directory
+```bash
+cd /etc/openvpn
+```
+
+### Download EasyRSA package
+```bash
+wget https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.6/EasyRSA-unix-v3.0.6.tgz
+```
+
+### Extract EasyRSA package
+```bash
+tar -xvzf EasyRSA-unix-v3.0.6.tgz
+```
+### Rename EasyRSA directory
+```bash
+mv EasyRSA-v3.0.6 easy-rsa
+```
+
+</details>
+
+
+

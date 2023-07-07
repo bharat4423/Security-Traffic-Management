@@ -129,10 +129,10 @@ cp pki/issued/actsvpn.crt /etc/openvpn/server/
 ```bash
 ./easyrsa sign-req client client
 ```
-* yes
-* password: redhat
+* `yes`
+* `password: redhat`
 ```bash
-# We create nopassword vihaan key
+# We create user vihaan with nopass
 ./easyrsa gen-req Vihaan nopass
 ```
 ```bash

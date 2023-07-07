@@ -1,5 +1,5 @@
 
-# OpenVPN installation Process
+# OpenVPN Installation Process
 <details>
 <summary>Step 1: Install OpenVpn </summary> 
 
@@ -30,9 +30,7 @@ sysctl -p
 yum install -y epel-release
 yum install -y openvpn
 ```
-
 </details>
-
 
 <details>
 <summary>Step 2: Config OpenVpn </summary> 
@@ -69,14 +67,14 @@ set_var EASYRSA_REQ_COUNTRY     "INDIA"
 set_var EASYRSA_REQ_PROVINCE    "Maharashtra"
 set_var EASYRSA_REQ_CITY        "Pune"
 set_var EASYRSA_REQ_ORG         "Vihaan Enterprises"
-set_var EASYRSA_REQ_EMAIL               "admin@demo.lab"
+set_var EASYRSA_REQ_EMAIL       "admin@demo.lab"
 set_var EASYRSA_REQ_OU          "Vihaan"
 set_var EASYRSA_KEY_SIZE        2048
 set_var EASYRSA_ALGO            rsa
-set_var EASYRSA_CA_EXPIRE               7500
+set_var EASYRSA_CA_EXPIRE       7500
 set_var EASYRSA_CERT_EXPIRE     365
-set_var EASYRSA_NS_SUPPORT              "no"
-set_var EASYRSA_NS_COMMENT              "Vihaan Enterprises"
+set_var EASYRSA_NS_SUPPORT      "no"
+set_var EASYRSA_NS_COMMENT      "Vihaan Enterprises"
 set_var EASYRSA_EXT_DIR         "$EASYRSA/x509-types"
 set_var EASYRSA_SSL_CONF        "$EASYRSA/openssl-easyrsa.cnf"
 set_var EASYRSA_DIGEST          "sha256"
@@ -89,7 +87,7 @@ set_var EASYRSA_DIGEST          "sha256"
 ```bash
 ./easyrsa build-ca 
 
- password: redhat 
+password: redhat 
 
 client2
 ```
@@ -122,8 +120,8 @@ cp pki/dh.pem /etc/openvpn/server/
 cp pki/private/actsvpn.key /etc/openvpn/server/
 cp pki/issued/actsvpn.crt /etc/openvpn/server/
 ```
-### Generate Client Certificate and Key File 
-#### First,run the following command to build the client key file:
+## Generate Client Certificate and Key File 
+### First,run the following command to build the client key file:
 ```bash
 ./easyrsa gen-req client nopass
 ```
@@ -177,8 +175,87 @@ log-append /var/log/openvpn.log
 verb 3
 ```
 
-</details>
 
+### Start OpenVPN Service and 
+```bash
+systemctl start openvpn-server@server
+systemctl status openvpn-server@server
+```
+### Configure Routing using Firewalld
+```bash
+firewall-cmd --permanent --add-service=openvpn
+firewall-cmd --permanent --zone=trusted --add-service=openvpn
+firewall-cmd --permanent --zone=trusted --add-interface=tun0
+```
+### For add the MASQUERADE on the default zone:
+```bash
+firewall-cmd --add-masquerade
+firewall-cmd --permanent --add-masquerade
+```
+### Run the following command to masquerade the internet traffic coming from VPN network (10.8.0.0/24) to systems local network interface (eth0).
+```bash
+tecadmin=$(ip route get 8.8.8.8 | awk 'NR==1 {print   $(NF-2)}')
+```
+```bash
+ip route get 8.8.8.8
+```
+```bash
+firewall-cmd --permanent --direct --passthrough ipv4 -t nat -A POSTROUTING -s 10.8.0.0/24 -o ens33 -j MASQUERADE
+firewall-cmd --reload
+```
+## Client Configuration on server machine 
+
+#### Next, create a new OpenVPN client configuration file named client.ovpn. You will require this file to connect your OpenVPN server from the client system.
+> `vim /etc/openvpn/client/client.ovpn`
+
+```bash
+client
+dev tun
+proto udp
+remote 192.168.20.151 1194
+ca ca.crt
+cert client.crt
+key client.key
+cipher AES-256-CBC
+auth SHA512
+auth-nocache
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-RSA-WITH-AES-128-GCM-SHA256:TLS-DHE-RSA-WITH-AES-128-CBC-SHA256
+resolv-retry infinite
+compress lz4
+nobind
+persist-key
+persist-tun
+mute-replay-warnings
+verb 3
+```
+### To download config file from server:
+```bash
+scp -r /etc/openvpn/client/ root@192.168.20.170:/root
+```
+</details>
+<details>
+<summary> Step 4: Connect OpenVPN from Clients Machine </summary>
+
+* First, log in to the client machine and install the OpenVPN package with the following command:
+
+```bash
+yum install epel-release -y
+yum install openvpn -y
+```
+* Then go the window machine(host only adapter) and check machine Ip and ping centos client to windows hostonly IP.
+### After Downloading run these commands to run OpenVPN server:
+```bash
+cd client
+openvpn --config client.ovpn
+```
+### Then open new terminal on client mahcine do the folloing process
+```bash
+ip a
+```
+
+
+</details>
 
 
 

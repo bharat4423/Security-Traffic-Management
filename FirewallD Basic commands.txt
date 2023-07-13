@@ -1,0 +1,94 @@
+****************FirewallD Basic commands ******************
+
+How do you check the firewalld status.
+
+systemctl status firewalld
+systemctl start firewalld
+systemctl enable firewalld
+
+How do you check the current configuration?
+firewall-cmd --list-all --zone=[zone-name]
+firewall-cmd --list-all --zone=public
+
+How do you check the current services.
+firewall-cmd --list-services
+
+how do you set a zone active
+firewall-cmd --set-default-zone [zone-name]
+firewall-cmd --set-default-zone=public
+
+How do you check default-zone
+firewall-cmd --get-default-zone [zone-name]
+firewall-cmd --get-default-zone
+
+How do you check the ports open or not.
+firewall-cmd --list-ports
+
+How do you open a port?
+1)Open http port 
+firewall-cmd --zone=public --add-service=http
+success
+firewall-cmd --zone=public --add-port=80/tcp
+success
+
+2)Open https port 
+firewall-cmd --zone=public --add-service=https
+success
+firewall-cmd --zone=public --add-port=443/tcp
+success
+
+How do you close a port?
+firewall-cmd --zone=public --remove-service=http
+success
+firewall-cmd --zone=public --remove-port=80/tcp
+success
+
+How do you make the firewall settings persistent?
+firewall-cmd --permanent --zone=public --add-port=80/tcp
+
+How do you reload the configuration?
+firewall-cmd --reload
+
+How do you change interfaces
+firewall-cmd --zone=public --change-interface=ens33
+
+How do you add service in a specific zone
+firewall-cmd --add-service=ssh --zone=private
+
+How do you get running services in a specific zones.
+firewall-cmd --get-services | grep ssh
+
+How do you check perticular zone list all parameter.
+firewall-cmd --zone=private --list-all
+
+How do you check active zone
+firewall-cmd --get-active-zone
+
+How do you add new zone.
+firewall-cmd --permanent --new-zone=[zone-name]
+e.g firewall-cmd --permanent --new-zone=private
+
+How do you check interfaces in specific zone
+firewall-cmd --zone=public --list-interfaces
+
+How do you add multiple port in a specific zones
+firewall-cmd --add-port={443/tcp,53/udp,3336/tcp} --zone=hpcsa
+
+How do you add icmp block on that zone (Go to this specific zone)
+firewall-cmd --add-icmp-block=echo-request --permanent;
+firewall-cmd --add-icmp-block=echo-reply --permanent;
+firewall-cmd --reload
+
+How do you remove icmp block from that zone(Go to this specific zone)
+firewall-cmd --remove-icmp-block=echo-request --permanent;
+firewall-cmd --remove-icmp-block=echo-reply --permanent;
+firewall-cmd --reload
+
+How do you query icmp block from that zone
+firewall-cmd --query-icmp-block=echo-request --permanent;
+firewall-cmd --query-icmp-block=echo-reply --permanent;
+firewall-cmd --reload
+
+
+
+

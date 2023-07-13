@@ -1,0 +1,52 @@
+
+ 1. Write a rule in firewalld to configure the following (10 Marks) .
+•	Allow ICMP from any IP address.
+ Ans: 
+#firewall-cmd --query-icmp-block=echo-request --permanent;
+#firewall-cmd --add-icmp-block=echo-request --permanent;
+#firewall-cmd --remove-icmp-block=echo-request --permanent;
+•	Write rich rule to allow ssh from 192.168.1.0/24 and private zone only. 
+Ans:  
+#firewall-cmd --add-rich-rule='rule family=ipv4 source address=192.168.1.0/24 service name=ssh log prefix=" Allow SSH Access" level="notice" accept'
+•	Write rule to allow secure webserver (https only) and block all other ports.
+Ans:-
+# firewall-cmd --zone=private --add-port=443/https --permanent
+# firewall-cmd --reload
+
+2. Set up Wireshark to capture web traffic from the local machine. (5 Marks)
+Ans:-
+
+3. Set up a reverse proxy using nginx according to the provided diagram, utilizing load balancing with the round robin mode. (15 Marks)
+ 
+Ans:
+
+4. Configure PFsense firewall with following rules. (10 Marks)
+a. Allow ICMP traffic from any IP address. 
+b. Block all incoming traffic except ICMP allowed above.
+c. Allow all traffic to outgoing.
+Ans:-
+OR
+5. Configure snort and write a rule to detect incoming SSH requests. (10 Marks)
+Ans:
+
+6. Configure the OpenVPN server with password-based authentication.
+Ans:
+
+Question Paper 2:
+
+1. Write a rule in firewalld to configure the following (10 Marks)
+Allow ICMP from any IP.
+Allow web server (http and https) access from any IP address. 
+Write rich rules for allow ssh from 192.168.76.0/24 only.
+Ans:
+2. Set up Wireshark to capture icmp traffic from the local machine (5 Marks)
+Ans:
+
+3. Set up a reverse proxy using nginx according to the provided diagram, utilizing load balancing with the weighted least connections mode (15 Marks)
+ 
+
+4. Configure SNORT to detect outgoing SSH requests (10 Marks).
+Ans:
+OR
+5. Configure the OpenVPN server with password-based authentication. (10 Marks)
+Ans:

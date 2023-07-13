@@ -1,0 +1,19 @@
+
+
+
+
+
+Packet filtering Firewall
+  -Source Ip address 
+   Source port
+   destination ip address
+   destination port
+   protocol
+   
+   
+   
+ Disadvantage 
+	Packet filtering firewalls allow a direct connection to be made
+	between the two endpoints.
+	
+	if port are open, they are open to all traffic paasing through that port, which in effect leaves a security hole in your network.

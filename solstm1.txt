@@ -1,0 +1,51 @@
+how to create a zone
+-> firewall-cmd --permanent --new-zone=zone-name
+-> firewall-cmd --reload
+
+how to set a zone active
+-> firewall-cmd --set-default-zone [zone-name]
+-> firewall-cmd --get-default-zone [zone-name]
+
+how to add icmp block on that zone
+-> firewall-cmd --add-icmp-block=echo-request --permanent;
+-> firewall-cmd --add-icmp-block=echo-reply --permanent;
+-> firewall-cmd --reload
+
+how to remove icmp block from that zone
+-> firewall-cmd --remove-icmp-block=echo-request --permanent;
+-> firewall-cmd --remove-icmp-block=echo-reply --permanent;
+-> firewall-cmd --reload
+
+
+how to query icmp block from that zone
+-> firewall-cmd --query-icmp-block=echo-request --permanent;
+-> firewall-cmd --query-icmp-block=echo-reply --permanent;
+-> firewall-cmd --reload
+
+
+solution:
+-> firewall-cmd --permanent --new-zone=private
+-> firewall-cmd --zone=private --list-all;
+-> firewall-cmd --reload
+
+-> firewall-cmd --add-icmp-block=echo-request --permanent;
+-> firewall-cmd --reload
+
+-> firewall-cmd --query-icmp-block=echo-request;
+
+-> firewall-cmd --remove-icmp-block=echo-request --permanent;
+-> firewall-cmd --reload
+
+
+problem statement:
+how to write rich rule for ssh
+-> firewall-cmd --add-rich-rule='rule family=ipv4 source address="192.168.1.0/24" 
+ service-name="ssh" accept'
+
+how to open a port for web access
+-> firewall-cmd --zone=private --add-port=80/http --permanent
+-> firewall-cmd --zone=private --add-port=443/https --permanent
+-> firewall-cmd --reload
+
+
+

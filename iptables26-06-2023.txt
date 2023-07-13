@@ -1,0 +1,125 @@
+/* iptables revision */
+
+-> iptables -A INPUT
+this command append the rule at the last
+
+-> iptables -D INPUT 3
+this command Deletes the rule at given position
+
+-> iptables -I INPUT 3
+this command insert the rule at the specified position
+
+-m : this parameter is used to define the module which has to be used with ip tables
+
+    -m state --state 
+    -m conntrack --cstate
+    -m limit --limit
+    -m length --length
+
+-j : this parameter is used to define the jump type which has to be performed with the packet
+
+    ACCEPT
+    DROP
+    REJECT
+    MASQUERADE
+
+# Limitation with iptables: this filter only works at network & transport layer and it only works with ip...
+to overcome this limitation we use squid proxy server which can work at application layer and different network protocols and urls...
+
+
+squid proxy server:
+-> default port : 3128
+-> caching directory : /var/spool/squid
+-> config file : /etc/squid/squid.conf
+
+# how to add entry to squid.conf
+acl acl-name acl-type identifier
+
+acl-types : 
+src
+dst
+srcdomain
+dstdomain
+url_regex
+time
+proxy_auth
+
+ex.
+http_access deny/allow acl-name acl-name
+
+# filtering on the basis of user_param
+# how to create user in squid
+/* creating user2 */
+-> sudo htpasswd /etc/squid/squid-users user2
+-> cat /etc/squid/squid-users
+
+/* creating user3 */
+-> sudo htpasswd /etc/squid/squid-users user3
+-> cat /etc/squid/squid-users
+
+# create file which has to be blocked for user 1
+-> vim /etc/squid/blk_user1.txt
+    .wikipedia.com
+    .redhat.com
+    .github.com
+
+-> now edit the squid.conf file 
+auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/squid-users
+auth_param basic children 5
+auth_param basic realm Squid Basic Authentication
+auth_param basic credentialsttl 2 hours
+
+acl acts_users proxy_auth REQUIRED
+acl user1 proxy_auth user1
+acl user1-access dstdomain "/etc/squid/blk_user1.txt" 
+
+http_access deny user1-access user1
+http_access allow acts_users
+
+# restart the service
+-> systemctl restart squid
+
+
+
+# to give exclusive access to limited users
+auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/squid-users
+auth_param basic children 5
+auth_param basic realm Squid Basic Authentication
+auth_param basic credentialsttl 2 hours
+
+acl acts_users proxy_auth REQUIRED
+acl user1 proxy_auth user1
+acl cartoons proxy_auth tom jerry noddy
+acl cartoons-access dstdomain "/etc/squid/cartoon.txt"
+acl user1-access dstdomain "/etc/squid/blk_user1.txt"
+
+http_access allow user1-access user1
+http_access allow cartoons-access cartoons
+http_access deny acts_users all
+
+# creating the acl file
+-> vim /etc/squid/cartoon.txt
+    .disney.in
+    .netflix.com
+    .hotstar.com
+
+# restart the service
+-> systemctl restart squid
+
+
+
+============================================
+    pfsense
+============================================
+
+select option 2 after installation:
+
+
+Packet filter Firewall :
+firewall/NAT/Port Forward
+
+columns
+1. Port forward
+2. 1:1
+3. Outboud
+4. NPt

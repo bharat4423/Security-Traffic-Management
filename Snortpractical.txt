@@ -1,0 +1,160 @@
+
+
+
+07a9aa0dda84f12d25b8a808c1f66e5bfde20b97
+
+
+*******************Snort Installation and practical*********
+Goto the PFsense portal 
+	\_Service
+		\_ Squid Proxy server and stop this services
+		
+		then goto the system
+		
+		
+Kali Linux IP:- 192.168.20.162
+PFSense	Firewall IP
+WAN- 192.168.20.155
+HOST Only:- 10.10.10.143
+PFSenseClient IP:- 10.10.10.135
+		
+		
+		Ping in kali linux
+		
+		ping -s 512 192.168.20.155 /* this is NAT IP */
+		
+**********Custom Rules******************		
+alert tcp any any -> any 8000 (msg:"virus.py downloaded";content:"virus.py";nocase;sid:1000001;rev:1;)
+
+alert tcp any 8000 -> any any (msg:"Hackers Website accessed";content:"index.html";nocase;sid:1000002;rev:1;)
+
+alert icmp any any -> 192.168.20.155 any (msg:"large ping packet detected";dsize:>256;sid:1000003;)
+
+alert icmp $HOME_NET any -> any any (msg:"Traceroute detected";ttl:<3;sid:1000004;)
+
+alert tcp any any -> 192.168.20.155 any (msg:"Possible NMAP Scan";flow:stateless;flags:S;detection_filter:track by_src,count 10,seconds 10;sid:1000005;)
+
+alert tcp any any -> 192.168.20.155 22 (msg:"Invalid SSH access";sid:1000006;)
+
+
+After writing custom roles go to the kaliLinux and Ping iP.
+
+sudo nmap -sS 192.168.20.155 #PFsense WLAN NAT IP
+
+
+**********************Assignment*************************
+
+Write Snort rules for following
+
+1)Detect ping for packet greater than 512 bytes
+
+Snort Interface
+\_ WAN
+	\_WAN Rules
+		\_custom.rules
+		
+
+alert icmp any any -> 192.168.20.163 any (msg:"large ping packet detected";dsize:>512;sid:1000001;)
+
+After writing custom roles go to the kaliLinux and Ping iP.
+
+ping -s 612 192.168.20.163  
+
+
+
+
+2) Detect nmap scan.
+
+Snort Interface
+\_ WAN
+	\_WAN Rules
+		\_custom.rules
+
+
+alert tcp any any -> 192.168.20.163 any (msg:"Possible NMAP Scan";flow:stateless;flags:F;detection_filter:track by_src,count 10,seconds 10;sid:1000002;)
+
+After writing custom roles go to the kaliLinux and Ping iP.
+
+sudo nmap -sF 192.168.20.163
+
+
+3)Detect if windows website is accessed from kaliLinux if it is
+ accessed from base machine no alert.
+ 
+ Snort Interface
+\_ WAN
+	\_WAN Rules
+		\_custom.rules
+		
+alert tcp !192.168.20.164 any -> 192.168.20.163 22 (msg:"Invalid SSH access";sid:1000003;)
+
+After writing custom roles go to the kaliLinux and Ping iP.	
+ssh root@192.168.20.163 
+ 
+ 
+4)Detect if ssh to nat ip is done.
+
+Snort Interface
+\_ WAN
+	\_WAN Rules
+		\_custom.rules
+		
+alert tcp any any -> 192.168.20.163 22 (msg:"Invalid SSH access";sid:1000004;)		
+		
+5)Create a website on kali linux.write a rule to detect if website is accessed.(Try drop action to check if access is blocked.)
+
+Snort Interface
+\_ WAN
+	\_WAN Rules
+		\_custom.rules
+		
+		
+alert tcp any any -> 192.168.20.162 any (msg:"restricated website is accessed";sid:10005;)
+block tcp any any -> 192.168.20.162 any (msg:"restricated website is accessed";sid:10005;)
+		
+		
+		
+		
+		
+		
+		
+		
+──(kadmin㉿kali)-[~]
+└─$ mkdir HackKali  
+┌──(kadmin㉿kali)-[~]
+└─$ cd HackKali 
+┌──(kadmin㉿kali)-[~/HackKali]
+└─$ pwd                       
+/home/kadmin/HackKali
+┌──(kadmin㉿kali)-[~/HackKali]
+└─$ vim index.html
+┌──(kadmin㉿kali)-[~/HackKali]
+└─$ sudo python3 -m http.server 8001
+
+
+
+
+
+
+**************Windows Attack****************
+
+Go to Kalilinux and start Wireshark for packet
+
+then go to client machine Windows 1o
+
+
+and check FTP server
+
+then Secpol.msc
+
+
+
+
+
+
+
+
+
+
+ 
+ 

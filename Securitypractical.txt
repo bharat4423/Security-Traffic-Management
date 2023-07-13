@@ -1,0 +1,416 @@
+
+
+
+#yum search iptables
+#yum install iptables-services iptables-utils
+
+#systemctl start iptables.service 
+#systemctl status iptables.service 
+#iptables -L
+#iptables -t filter -L (same output)
+#iptables -t nat -L
+#iptables -t mangle -L
+#iptables -t raw -L
+iptables --flush 
+iptables -F
+iptables -L
+systemctl restart iptables
+iptables -L
+iptables -F
+iptables -L
+iptables -P FORWARD DROP
+iptables -L
+
+
+
+**********************************************21-06-2023****
+Prerequestic
+
+1. Two Centos Machine
+2. Windows Server Machine
+
+
+
+[root@master ~]# cat /proc/sys/net/ipv4/ip_forward
+
+
+[root@master ~]# vi /etc/sysctl.conf 
+
+				Edit
+				
+				net.ipv4.ip_forward=1
+				
+				:wq savefile
+
+[root@master ~]# systemctl status iptables
+
+[root@master ~]# iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o ens33 -j MASQUERADE 
+
+[root@master ~]# iptables -t nat -L (For Cheking NAT rules)
+
+------OUTPUT-------
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+MASQUERADE  all  --  10.10.10.0/24        anywhere            
+
+Chain KUBE-KUBELET-CANARY (0 references)
+target     prot opt source               destination  
+--------------------------------------------------------
+
+
+[root@master ~]# iptables -P FORWARD ACCEPT
+[root@master ~]# iptables -L
+
+--------------output--------------------------------
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+
+Chain KUBE-FIREWALL (0 references)
+target     prot opt source               destination         
+
+Chain KUBE-KUBELET-CANARY (0 references)
+target     prot opt source               destination 
+
+-------------------------------------------------------
+
+[root@master ~]# iptables -P FORWARD DROP (after that internet not working)
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.0/24 -d 192.168.20.2 -p udp --dport 53 -j ACCEPT   (for forword internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.0/24 -s 192.168.20.2 -p udp --sport 53 -j ACCEPT    (for reverse internet)
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.0/24 -d www.google.com -p tcp --dport 443 -j ACCEPT    (for forword Google internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.0/24 -s www.google.com -p tcp --sport 443 -j ACCEPT    (for reverse Google internet)
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.0/24 -d www.wikipedia.org -p tcp --dport 443 -j ACCEPT    (for forword Wikipedia internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.0/24 -s www.wikipedia.org -p tcp --sport 443 -j ACCEPT    (for reverse wikipedia internet)
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.0/24 -d www.centos.org -p tcp --dport 443 -j ACCEPT    (for forword centos internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.0/24 -s www.centos.org -p tcp --sport 443 -j ACCEPT    (for reverse centos internet)
+
+
+*************For Client 1 Add Rules in FIREWALL*********************
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.131 -d www.youtube.com -p tcp --dport 443 -j ACCEPT (for forword Youtube internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.131 -s www.youtube.com -p tcp --sport 443 -j ACCEPT (for reverse Youtube internet)
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.131 -d www.microsoft.com -p tcp --dport 443 -j ACCEPT (for forword Microsoft internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.131 -s www.microsoft.com -p tcp --sport 443 -j ACCEPT (for reverse Microsoft internet)
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.131 -d 23.213.68.43 -p tcp --dport 443 -j ACCEPT (for forword Cisco internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.131 -s 23.213.68.43 -p tcp --sport 443 -j ACCEPT (for reverse Cisco internet)
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.131 -d 108.158.55.68 -p tcp --dport 443 -j ACCEPT (for forword AWS internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.131 -s 108.158.55.68 -p tcp --sport 443 -j ACCEPT (for reverse AWS internet)
+
+[root@master ~]# service iptables save
+
+************For Client 2 Add Rules in FIREWALL*******************
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.129 -d portal.azure.com -p tcp --dport 443 -j ACCEPT
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.129 -s portal.azure.com -p tcp --sport 443 -j ACCEPT
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.129 -d www.heroku.com -p tcp --dport 443 -j ACCEPT
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.129 -s www.heroku.com -p tcp --sport 443 -j ACCEPT
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.129 -d www.redhat.com -p tcp --dport 443 -j ACCEPT
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.129 -s www.redhat.com -p tcp --sport 443 -j ACCEPT
+[root@master ~]# service iptables save 
+
+-------------------Stateful Packet---------------------------------
+
+For doing Stateful Packet We required to Flush IP tables first using below command
+---------------------------------------------------------------
+[root@master ~]# iptables -F
+
+After Flushing IP tables we required to agin allow DNS ports, using below forword and reverse command.
+------------------------------------------------------------------
+[root@master ~]# iptables -A FORWARD -s 10.10.10.0/24 -d 192.168.20.2 -p udp --dport 53 -j ACCEPT   (for forword internet)
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.0/24 -s 192.168.20.2 -p udp --sport 53 -j ACCEPT    (for reverse internet)
+
+
+[root@master ~]# iptables -A FORWARD -s 10.10.10.131 -d www.youtube.com -p tcp --dport 443 -m state --state NEW,ESTABLISHED -j ACCEPT
+
+[root@master ~]# iptables -A FORWARD -d 10.10.10.131 -s www.youtube.com -p tcp --sport 443 -m state --state NEW,ESTABLISHED -j ACCEPT
+
+----------------------Prevent DOS attacks on N/W--------------------
+
+* Using ICMP we block pings for outside network.
+------------------------------------------------------------------
+[root@master ~]# iptables -A INPUT -i ens33 -p icmp --icmp-type echo-request -j DROP
+
+[root@master ~]#iptables -L (Check Drop command Rule number in tables)
+
+[root@master ~]#iptables -D INPUT 2 (Using this command we delete this DROP rule number)
+
+(Using below Command we accept the outside packet 5 per second in our network )
+-----------------------------------------------------------
+
+[root@master ~]#iptables -A INPUT -i ens33 -p icmp -m limit --limit 5/s -j ACCEPT
+
+
+For block the packet in Range 128 to 65500
+--------------------------------------------
+
+[root@master ~]# iptables -A INPUT -i ens33 -p icmp -m length --length 128:65500 -j DROP
+
+After that you will go to the windows base machine and check the packets
+-----------------------------------------------------------
+C:\Users\dhpcsa>ping -n 10 -l 99 192.168.20.149 ( ping working only 0 to 99 only )
+
+C:\Users\dhpcsa>ping -n 10 -l 129 192.168.20.149 (ping not working)
+
+
+-------------------------Main Windows----------------------------
+
+Cheking on our Windows base machine 
+
+C:\Users\dhpcsa>ping -l 128 192.168.20.149 -t (128 is we provide the packet limit )
+
+C:\Users\dhpcsa>ping -l 100000 192.168.20.149 -t
+Bad value for option -l, valid range is from 0 to 65500.
+
+C:\Users\dhpcsa>ping -l 65500 192.168.20.149 -t
+
+-----------------------------------------------------------
+
+
+
+
+
+*****************************on Node*********************
+
+
+#systemctl restart network
+#ping google.com
+#nslookup www.google.com
+#systemctl restart network
+#nslookup www.google.com
+#ping google.com
+#nslookup www.google.com
+#systemctl restart network
+#nslookup www.google.com
+#systemctl restart network
+#nslookup www.google.com
+#ping google.com
+#history
+
+------------------------24june2023-----------------------------
+
+```````````````````Proxy FIREWALL````````````````````````
+
+--------------Squid installation---------------
+
+yum install squid
+
+
+#cd /etc/squid/
+
+#vi squid.conf
+
+#edit : do the below changes
+
+# Squid normally listens port 3128
+
+http_port 3128
+#adjust the follwing to add a disk
+
+cache_dir ufs /var/spool/squid 2048 16 256
+visible_hostname proxy.hpcsa.lab
+
+:wq savefile
+
+
+#ls /var/spool/squid/
+#ls /var/spool/squid/00
+
+
+#systemctl start squid
+#systemctl status squid
+
+
+#vi blocked_sites.txt
+edit:
+
+.microsoft.com
+.youtube.com
+.esakal.com
+.facebook.com
+
+:wq savefile
+
+
+#vi squid.conf
+
+#edit : do the below changes
+
+#INSERT YOUR OWN Rules
+acl hpcsalab src 10.10.10.0/24
+acl client1 src 10.10.10.131
+acl blocked_sites dstdomain "/etc/squid/blocked_sites.txt"
+acl client1-blocked dstdomain "/etc/squid/client1-blocked.txt"
+http_access deny client1-blocked client1
+http_access deny blocked_sites hpcsalab
+http_access allow hpcsalab
+
+:wq savefile
+
+/* create a list of the blocked sites for the client1 machine*/
+#vi /etc/squid/client1-blocked.txt
+.wikipedia.org
+.cisco.com
+.redhat.com
+
+:wq savefile
+
+/* restart the squid server */
+-> systemctl restart squid
+-> systemctl status squid
+
+/* how to implement time based acl list */
+day of week 
+/* Predefined day list in squid server*/
+S - Sunday
+M - Monday
+T - Tuesday
+W - Wednesday
+H - Thursday
+F - Friday
+A - Saturday
+
+/* edit the squid.conf fie for the time based acl */
+#INSERT YOUR OWN Rules
+# vi /etc/squid/squid.conf
+acl hpcsalab src 10.10.10.0/24
+acl client1 src 10.10.10.131
+acl cdac-time time A 11:00-14:00
+acl cdac dstdomain .cdac.in
+acl blocked_sites dstdomain "/etc/squid/blocked_sites.txt"
+acl client1-blocked dstdomain "/etc/squid/client1-blocked.txt"
+http_access deny cdac cdac-time 
+http_access deny client1-blocked client1
+http_access deny blocked_sites hpcsalab
+http_access allow hpcsalab
+:wq savefile
+
+/* rules have no priority they are implemented on the basis of their order */
+
+/* restart the squid server */
+-> systemctl restart squid
+-> systemctl status squid
+
+/* how to implement content based acl_list */
+#INSERT YOUR OWN Rules
+# vi /etc/squid/squid.conf
+
+# Uncomment and adjust the following to add a disk cache directory.
+cache_dir ufs /var/spool/squid 2048 16 256
+visible_hostname proxy.hpcsa.lab
+
+# INSERT YOUR OWN RULE(S) HERE TO ALLOW ACCESS FROM YOUR CLIENTS
+
+acl hpcsalab src 10.10.10.0/24
+acl client1 src 10.10.10.131
+acl client2 src 10.10.10.130
+acl cdac-time time A 14:00-17:00
+acl cdac dstdomain .cdac.in
+acl github-time time A 14:00-17:00
+acl github dstdomain .github.com
+acl docker-time time A 14:00-17:00
+acl docker dstdomain hub.docker.com
+acl kubernetes-time time A 11:00-13:00
+acl kubernetes dstdomain .kubernetes.io
+acl jenkins-time time A 11:00-13:00
+acl jenkins dstdomain .jenkins.io
+
+acl time1 A 14:00-17:00
+
+acl block_client1 dstdomain "/etc/squid/block_client1.txt"
+acl block_client2 dstdomain "/etc/squid/block_client2.txt"
+acl badwords url_regex -i "/etc/squid/badwords.txt"
+http_access allow cdac cdac-time
+http_access allow github github-time
+http_access allow docker docker-time
+http_access allow kubernetes kubernetes-time
+http_access allow jenkins jenkins-time
+http_access deny block_client1 client1
+http_access deny block_client2 client2
+http_access deny badwords hpcsalab
+http_access allow hpcsalab
+http_access deny list !time1
+
+:wq savefile
+
+/* create a file of badwords.txt */
+# vi /etc/squid/badwords.txt
+torrent
+cricket
+ipl
+football
+movies
+bookmyshow
+ 
+
+/* restart the squid server */
+-> systemctl restart squid
+-> systemctl status squid
+
+/* squid authentication  */
+acl my_auth proxy_auth REQUIRED
+
+
+
+====================================================
+	User authentication
+====================================================
+
+#
+# INSERT YOUR OWN RULE(S) HERE TO ALLOW ACCESS FROM YOUR CLIENTS
+
+
+# user authentication
+# auth_param : authentication parameters
+
+auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid/squid-users
+auth_param basic children 5
+auth_param basic realm Squid Basic Authentication
+auth_param basic credentialsttl 2 hours
+acl acts_users proxy_auth REQUIRED
+http_access allow acts_users
+
+
+/* to create squid-user file */
+# yum install httpd-tools
+# htpasswd -c /etc/squid/squid-users user1
+New password:
+Re-type new password:
+Adding password for user user1
+# cat /etc/squid/squid-users
+user1:$apr1$Y2UyxmL7$CLzLL/D.H4gllWiym3Rm9/
+

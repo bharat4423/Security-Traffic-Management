@@ -1,0 +1,300 @@
+*******************OpenVPN installation Process*****************
+------OpenVPN Server machine------------------
+
+Step 1 – Disable SELinux
+vim /etc/selinux/config
+SELINUX=disabled
+:wq 
+Save File
+
+Step 2 - Change Hostname
+hostnamectl set-hostname OpenVPN
+
+Step 3 - Enable IP Forwarding
+vim /etc/sysctl.conf
+	net.ipv4.ip_forward = 1
+:wq 
+Save File
+
+sysctl -p #Use this  Command  to apply the changes.
+
+
+Step 4 – Install OpenVPN Server
+
+dnf install epel-release -y
+dnf install openvpn -y
+
+cd /etc/openvpn
+wget https://github.com/OpenVPN/easy-rsa/releases/download/v3.0.6/EasyRSA-unix-v3.0.6.tgz
+
+tar -xvzf EasyRSA-unix-v3.0.6.tgz
+
+mv EasyRSA-v3.0.6 easy-rsa
+
+Step 5 – Setup Certificate Authority
+
+cd /etc/openvpn/easy-rsa
+------------------------
+vim vars
+edit file
+
+set_var EASYRSA                 "$PWD"
+set_var EASYRSA_PKI             "$EASYRSA/pki"
+set_var EASYRSA_DN              "cn_only"
+set_var EASYRSA_REQ_COUNTRY     "INDIA"
+set_var EASYRSA_REQ_PROVINCE    "Maharashtra"
+set_var EASYRSA_REQ_CITY        "Pune"
+set_var EASYRSA_REQ_ORG         "Vihaan Enterprises"
+set_var EASYRSA_REQ_EMAIL               "admin@demo.lab"
+set_var EASYRSA_REQ_OU          "Vihaan"
+set_var EASYRSA_KEY_SIZE        2048
+set_var EASYRSA_ALGO            rsa
+set_var EASYRSA_CA_EXPIRE               7500
+set_var EASYRSA_CERT_EXPIRE     365
+set_var EASYRSA_NS_SUPPORT              "no"
+set_var EASYRSA_NS_COMMENT              "Vihaan Enterprises"
+set_var EASYRSA_EXT_DIR         "$EASYRSA/x509-types"
+set_var EASYRSA_SSL_CONF        "$EASYRSA/openssl-easyrsa.cnf"
+set_var EASYRSA_DIGEST          "sha256"
+
+
+:wq
+Save file
+
+-------------------
+#command to initiate the PKI directory.
+
+./easyrsa init-pki 
+
+#build the CA certificates with the following command:
+
+./easyrsa build-ca 
+
+/* password: redhat 
+
+client2
+*/
+
+-------------------------------------------
+
+Step 6 – Generate Server Certificate Files
+
+#command to generate the server key named actsvpn :
+
+./easyrsa gen-req actsvpn nopass
+
+/*
+comman name : actsvpn
+*/
+
+Step 7 – Sign the Server Key Using CA
+
+./easyrsa sign-req server actsvpn
+
+/* password: redhat */
+
+#verify the generated certificate file
+
+openssl verify -CAfile pki/ca.crt pki/issued/actsvpn.crt
+
+#run the following command to generate a strong Diffie-Hellman key to use for the key exchange:
+
+./easyrsa gen-dh
+
+#After creating all certificate files, copy them to the 
+
+/etc/openvpn/server/ directory:
+
+cp pki/ca.crt /etc/openvpn/server/
+cp pki/dh.pem /etc/openvpn/server/
+cp pki/private/actsvpn.key /etc/openvpn/server/
+cp pki/issued/actsvpn.crt /etc/openvpn/server/
+------------------------------------------------------
+Step 8 – Generate Client Certificate and Key File
+
+#First, run the following command to build the client key file:
+
+./easyrsa gen-req client nopass
+
+/* client1 */
+------------------------------------------
+#Next, sign the client key using your CA certificate:
+
+./easyrsa sign-req client client
+
+*
+yes
+ password: redhat */
+--------------------------------------------
+./easyrsa gen-req Vihaan nopass
+
+/*
+Common Name (eg: your user, host, or server name) [Vihaan]:Vihaan
+*/
+
+---------------------------------------------
+./easyrsa sign-req client client
+
+/*
+yes
+ password: redhat */
+---------------------------------------------
+
+# copy all client certificate and key file to the /etc/openvpn/client/ directory:
+
+cp pki/ca.crt /etc/openvpn/client/
+cp pki/issued/client.crt /etc/openvpn/client/
+cp pki/private/client.key /etc/openvpn/client/
+
+------------------------------------------------
+
+Step 9 – Configure OpenVPN Server
+
+
+vim /etc/openvpn/server/server.conf
+edit:
+
+port 1194
+proto udp
+dev tun
+ca /etc/openvpn/server/ca.crt
+cert /etc/openvpn/server/actsvpn.crt
+key /etc/openvpn/server/actsvpn.key
+dh /etc/openvpn/server/dh.pem
+server 10.8.0.0 255.255.255.0
+#push "redirect-gateway def1"
+#push "dhcp-option DNS 208.67.222.222"
+#push "dhcp-option DNS 208.67.220.220"
+duplicate-cn
+cipher AES-256-CBC
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-RSA-WITH-AES-128-GCM-SHA256:TLS-DHE-RSA-WITH-AES-128-CBC-SHA256
+auth SHA512
+auth-nocache
+keepalive 20 60
+persist-key
+persist-tun
+compress lz4
+daemon
+user nobody
+group nobody
+log-append /var/log/openvpn.log
+verb 3
+
+:wq
+ SaveFile
+-------------------------------------
+
+Step 10 – Start OpenVPN Service
+
+#system reboot using the following command:
+
+systemctl start openvpn-server@server
+systemctl status openvpn-server@server
+-------------------------------------------
+Step 11 – Configure Routing using Firewalld
+
+firewall-cmd --permanent --add-service=openvpn
+firewall-cmd --permanent --zone=trusted --add-service=openvpn
+firewall-cmd --permanent --zone=trusted --add-interface=tun0
+
+
+#For add the MASQUERADE on the default zone:
+firewall-cmd --add-masquerade
+firewall-cmd --permanent --add-masquerade
+
+#run the following command to masquerade the internet traffic coming from VPN network (10.8.0.0/24) to systems local network interface (eth0).
+
+
+tecadmin=$(ip route get 8.8.8.8 | awk 'NR==1 {print   $(NF-2)}')
+
+ip route get 8.8.8.8
+
+firewall-cmd --permanent --direct --passthrough ipv4 -t nat -A POSTROUTING -s 10.8.0.0/24 -o ens33 -j MASQUERADE
+firewall-cmd --reload
+
+***************************Client Configuration*******************
+
+Step 12– Generate Client Configuration File
+
+#Next, create a new OpenVPN client configuration file named client.ovpn. You will require this file to connect your OpenVPN server from the client system.
+
+vim /etc/openvpn/client/client.ovpn
+Edit:
+
+client
+dev tun
+proto udp
+remote 192.168.20.170 1194
+ca ca.crt
+cert client.crt
+key client.key
+cipher AES-256-CBC
+auth SHA512
+auth-nocache
+tls-version-min 1.2
+tls-cipher TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:TLS-DHE-RSA-WITH-AES-256-CBC-SHA256:TLS-DHE-RSA-WITH-AES-128-GCM-SHA256:TLS-DHE-RSA-WITH-AES-128-CBC-SHA256
+resolv-retry infinite
+compress lz4
+nobind
+persist-key
+persist-tun
+mute-replay-warnings
+verb 3
+
+:wq
+SaveFile
+----------------------------------
+
+#On the client machine, run the following command to download all the client configuration file:
+
+scp -r /etc/openvpn/client/ root@192.168.20.151:/root
+
+-------------------------------------------
+
+Step 13 – Connect OpenVPN from Clients
+
+#First, log in to the client machine and install the OpenVPN package with the following command:
+
+yum install epel-release -y
+yum install openvpn -y
+
+/*
+then go the window machine(host only adapter) and check machine Ip and ping centos cliet to windows hostonly IP. */
+
+------------------------------------------
+
+then go to Centos client machine do the next commands
+
+#Once downloaded, change the directory to client and run the following command to connect to OpenVPN server:
+
+cd client
+openvpn --config client.ovpn
+
+#then open new terminal on client mahcine do the folloing process
+
+ip a
+
+#ping to windows mahcine
+ ping 10.10.10.135
+# next command check it route  
+route -n
+
+# on the openvpn server machine make changes to server.conf file
+vim /etc/openvpn/server/server.conf
+push "route 10.10.10.0 255.255.255.0"
+# after adding route restart the openvpn service
+systemctl restart openvpn-server@server
+
+============================
+	on client machine
+============================
+# go to client and restart the client.ovpn
+openvpn --config client.ovpn
+
+# on another terminal 
+route -n
+# ping the windows machine
+ping 10.10.10.135
+
+

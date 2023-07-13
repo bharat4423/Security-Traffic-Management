@@ -8,7 +8,7 @@ echo "IP Address Status: " `ens`
 ip a | grep ens
 
 # stop the firewall service
-systemctl stop firewalld; systemctl disable firewalld; systemctl status firewalld | grep Active;
+systemctl stop firewalld; systemctl disable firewalld;
 
 echo "Firewall Status : " `systemctl status firewalld | grep Active`
 # disable the selinux at policy level

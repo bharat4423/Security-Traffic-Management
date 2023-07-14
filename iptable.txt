@@ -1,0 +1,248 @@
+A.Implement firewall ndes using iptables to secure a Linus server that hosts a website with a public 11 1961113.45
+        # Flush existing rules and chains
+        iptables -F
+        iptables -X
+
+        # Set default policies
+        iptables -P INPUT DROP
+        iptables -P FORWARD DROP
+        iptables -P OUTPUT ACCEPT
+
+        # Allow loopback traffic
+        iptables -A INPUT -i lo -j ACCEPT
+        iptables -A OUTPUT -o lo -j ACCEPT
+
+        # Allow established connections
+        iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+        # Allow incoming HTTP traffic (port 80)
+        iptables -A INPUT -p tcp --dport 80 -m state --state NEW -j ACCEPT
+
+        # Allow incoming HTTPS traffic (port 443)
+        iptables -A INPUT -p tcp --dport 443 -m state --state NEW -j ACCEPT
+
+        # Allow SSH traffic from a specific IP address (replace 196.1.113.4 with your desired IP)
+        iptables -A INPUT -p tcp --dport 22 -s 196.1.113.4 -j ACCEPT
+
+        # Drop all other incoming traffic
+        iptables -A INPUT -j DROP
+
+
+
+
+
+    a.Write a set of iptables rules to allow SSH traffic from IP 196.1.113.4 only1.
+        # Flush existing rules and chains
+        iptables -F
+        iptables -X
+
+        # Set default policies
+        iptables -P INPUT DROP
+        iptables -P FORWARD DROP
+        iptables -P OUTPUT ACCEPT
+
+        # Allow loopback traffic
+        iptables -A INPUT -i lo -j ACCEPT
+        iptables -A OUTPUT -o lo -j ACCEPT
+
+        # Allow SSH traffic from IP 196.1.113.4
+        iptables -A INPUT -p tcp -s 196.1.113.4 --dport 22 -j ACCEPT
+
+        # Allow established connections
+        iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+        # Allow HTTP/HTTPS traffic (assuming the web server is running on ports 80 and 443)
+        iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+        iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+        # Drop all other incoming traffic
+        iptables -A INPUT -j DROP
+
+
+
+
+
+    b. Write a set of iptables rules to allow incoming HTTP (port 80) and HTTPS (port 443) traffic to the web server
+            # Flush existing rules and chains
+        iptables -F
+        iptables -X
+
+        # Set default policies
+        iptables -P INPUT DROP
+        iptables -P FORWARD DROP
+        iptables -P OUTPUT ACCEPT
+
+        # Allow loopback traffic
+        iptables -A INPUT -i lo -j ACCEPT
+        iptables -A OUTPUT -o lo -j ACCEPT
+
+        # Allow established connections
+        iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+        # Allow incoming HTTP (port 80) traffic
+        iptables -A INPUT -p tcp --dport 80 -m state --state NEW -j ACCEPT
+
+        # Allow incoming HTTPS (port 443) traffic
+        iptables -A INPUT -p tcp --dport 443 -m state --state NEW -j ACCEPT
+
+        # Drop all other incoming traffic
+        iptables -A INPUT -j DROP
+
+C. Write a set of iptables rules to log packets directed to port 22
+
+            # Flush existing rules and chains
+        iptables -F
+        iptables -X
+
+        # Set default policies
+        iptables -P INPUT DROP
+        iptables -P FORWARD DROP
+        iptables -P OUTPUT ACCEPT
+
+        # Allow loopback traffic
+        iptables -A INPUT -i lo -j ACCEPT
+        iptables -A OUTPUT -o lo -j ACCEPT
+
+        # Log packets directed to port 22 (SSH)
+        iptables -A INPUT -p tcp --dport 22 -j LOG --log-prefix "SSH Packet:"
+
+        # Allow established connections
+        iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+        # Allow incoming HTTP (port 80) traffic
+        iptables -A INPUT -p tcp --dport 80 -m state --state NEW -j ACCEPT
+
+        # Allow incoming HTTPS (port 443) traffic
+        iptables -A INPUT -p tcp --dport 443 -m state --state NEW -j ACCEPT
+
+        # Drop all other incoming traffic
+        iptables -A INPUT -j DROP
+
+B. Configure Squid as a proxy server to allow unty web browsing for the 1 subnet 192.168.40.0/24 h should only allow access to websites from the gov in domain
+    To configure Squid as a proxy server to allow only web browsing for the IP subnet 192.168.40.0/24 and restrict access to websites from the "*.gov.in" domain, you can follow these steps:
+
+    1. Install Squid:
+    ```
+    sudo apt update
+    sudo apt install squid      
+    ```
+
+    2. Configure Squid to listen on the desired network interface and port:
+    Edit the Squid configuration file `/etc/squid/squid.conf`:
+    ```
+    sudo nano /etc/squid/squid.conf
+    ```
+    Find the line that starts with `http_port` and modify it to specify the desired IP address and port. For example:
+    ```
+    http_port 192.168.40.1:3128
+    ```
+
+    3. Configure Squid to allow web browsing for the subnet 192.168.40.0/24:
+    Add the following ACL (Access Control List) lines to the Squid configuration file:
+    ```
+    acl localnet src 192.168.40.0/24
+    http_access allow localnet
+    ```
+
+    4. Configure Squid to allow access only to websites from the "*.gov.in" domain:
+    Add the following ACL lines to the Squid configuration file:
+    ```
+    acl govsites dstdomain .gov.in
+    http_access allow govsites
+    http_access deny all
+    ```
+
+    5. Save the changes and exit the editor.
+
+    6. Restart Squid to apply the changes:
+    ```
+    sudo service squid restart
+    ```
+
+    Now, the Squid proxy server is configured to allow only web browsing for the IP subnet 192.168.40.0/24, and it restricts access to websites from the "*.gov.in" domain. Adjust the IP address, port, and ACLs according to your specific network setup and domain restrictions.
+
+
+
+C. Generate alerts using Snort on a Linux VM or pfSense for any connection attempts on port 22 for the server at IP addrest 196,1 11345, except those from IP 1961.113.4   
+
+        To generate alerts using Snort on a Linux VM or pfSense for any connection attempts on port 22 (SSH) to the server at IP address 196.1.113.45, except those from IP 196.1.113.4, you can follow these steps:
+
+        1. Install Snort on a Linux VM or set up pfSense with Snort.
+
+        2. Configure Snort rules to monitor port 22 connections. Create or edit the Snort rules file, which is typically located at `/etc/snort/rules/snort.rules` in Linux or accessible through the pfSense GUI in pfSense.
+
+        3. Add the following rule to the Snort rules file:
+        ```
+        alert tcp any any -> 196.1.113.45 22 (msg:"Unauthorized SSH Connection Attempt"; flow:to_server; flags:S; detection_filter:track by_src, count 1, seconds 60; threshold:type limit, track by_src, count 1, seconds 60; sid:1000001; rev:1;)
+        ```
+
+        This rule will generate an alert for any TCP connection attempt to port 22 (SSH) on the server at IP address 196.1.113.45.
+
+        4. Add an exception for the authorized IP address. Modify the rule to exclude the IP address 196.1.113.4 from the alert:
+        ```
+        alert tcp any any -> 196.1.113.45 22 (msg:"Unauthorized SSH Connection Attempt"; flow:to_server; flags:S; detection_filter:track by_src, count 1, seconds 60; threshold:type limit, track by_src, count 1, seconds 60, noprobe; threshold: type limit, track by_src, count 1, seconds 60; threshold: type limit, track by_dst, count 1, seconds 60, noprobe; threshold: type limit, track by_dst, count 1, seconds 60; threshold: type limit, track by_src, count 1, seconds 60, noprobe; threshold: type limit, track by_src, count 1, seconds 60; threshold: type limit, track by_dst, count 1, seconds 60, noprobe; threshold: type limit, track by_dst, count 1, seconds 60; threshold: type limit, track by_src, count 1, seconds 60, noprobe; threshold: type limit, track by_src, count 1, seconds 60; threshold: type limit, track by_dst, count 1, seconds 60, noprobe; threshold: type limit, track by_dst, count 1, seconds 60; sid:1000001; rev:1; ip.src !196.1.113.4;)
+        ```
+
+        This modified rule will exclude the IP address 196.1.113.4 from triggering the alert.
+
+        5. Save the changes to the Snort rules file.
+
+        6. Restart Snort for the changes to take effect.
+
+        Now, Snort on your Linux VM or pfSense with Snort will generate alerts for any connection attempts on port 22 to the server at IP address 196.1.113.45, except for those originating from the IP address 196.1.113.4. Adjust the rule and configuration based on your specific setup and requirements.
+
+
+
+
+4. Set up high-vailability archnecture for a web application using Ngins as a reverse proxy server Canlige Ngins to act as a reverse proxy and diaribute incoming traffic across multiple servers using round-robin load balancing.
+
+
+        To set up a high-availability architecture for a web application using Nginx as a reverse proxy server and configure it to distribute incoming traffic across multiple servers using round-robin load balancing, you can follow these steps:
+
+        1. Install Nginx:
+        ```
+        sudo apt update
+        sudo apt install nginx
+        ```
+
+        2. Configure Nginx as a reverse proxy:
+        Edit the Nginx configuration file `/etc/nginx/nginx.conf`:
+        ```
+        sudo nano /etc/nginx/nginx.conf
+        ```
+        Modify the `http` block to include the following configuration:
+        ```nginx
+        http {
+            upstream backend {
+                server server1.example.com;
+                server server2.example.com;
+                # Add more servers as needed
+            }
+
+            server {
+                listen 80;
+                server_name your_domain.com;
+
+                location / {
+                    proxy_pass http://backend;
+                }
+            }
+        }
+        ```
+        Replace `server1.example.com` and `server2.example.com` with the actual IP addresses or domain names of your backend servers. You can add more server entries to include additional backend servers.
+
+        3. Save the changes and exit the editor.
+
+        4. Test the Nginx configuration for syntax errors:
+        ```
+        sudo nginx -t
+        ```
+
+        5. If there are no syntax errors, restart Nginx to apply the changes:
+        ```
+        sudo service nginx restart
+        ```
+
+        Now, Nginx is configured as a reverse proxy server and will distribute incoming traffic across the backend servers using round-robin load balancing. Adjust the configuration according to your specific setup, including adding more servers or specifying different ports or domains.
+
+        Note: Make sure your backend servers are properly configured to handle the incoming traffic and serve the web application.
